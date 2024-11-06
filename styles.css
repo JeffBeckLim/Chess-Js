@@ -1,0 +1,40 @@
+/* .bishop{
+    width: 40px !important;
+    height: 40px;
+} */
+/* .king{
+    width: 40px !important;
+    height: 35px;
+} */
+.queen{
+  scale: 1.5;
+}
+.king{
+    scale: 1.5;
+}
+.pawn{
+    scale: 0.9;
+}
+.horse{
+    scale: 1.1;
+}
+img{
+    width: 20px;
+    height: auto;
+}
+
+
+table{
+    border-collapse: collapse;
+
+}
+table tr td{
+    border: 2px black solid;
+    height: 3rem;
+    width: 3rem;
+}
+
+td{
+    text-align: center;
+    /* padding: 4px; */
+}
