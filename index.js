@@ -19,21 +19,22 @@ function createBoard(letter, number){
             
             // cell.textContent = letter[j]+number[i]
 
-            cell.style.backgroundColor = (i + j) % 2 === 0 ? 'white' : '#ccc';
+            cell.style.backgroundColor = (i + j) % 2 === 0 ? '#f5ead0' : '#b5a791';
             row.appendChild(cell);
         }
         board.appendChild(row)
     }
-    document.body.appendChild(board);
+    document.getElementById("board").appendChild(board);
+    // document.body.appendChild(board);
 
-    setPawn();
-    setRook();
-    setHorse();
-    setBishop();
-    setQueen();
-    setKing();
+    
 }
-
+setPawn();
+setRook();
+setHorse();
+setBishop();
+setQueen();
+setKing();
 // populate with pawns
 function setPawn(){  
     for(i=0; i<8; i++){    
@@ -149,22 +150,30 @@ function setKing(){
 
 
 const squares = document.querySelectorAll(".square");
-
-
 let active_square = null;
 let moves = null;
+const turn_indicator = document.getElementById("turn_indicator");
+
+// _wht white or _blk black
+let turn = "_wht";
+
+
 squares.forEach(square => {
     square.addEventListener('click', () => {
+        
 
         // reset if same square selected
         if(active_square == square){
             square.style.border = css_normal_border;
+            square.style.filter = "opacity(100%)"
             active_square = null;
             
+            turn == "_wht"? turn = "_blk" : turn = "_wht";
+
             // also reset the moves
             if(moves != null){
                 // should be a loop
-                moves.style.border = css_normal_border;
+                // moves.style.border = css_normal_border;
                 moves = null;
             }
 
@@ -174,20 +183,26 @@ squares.forEach(square => {
 
             // eat ???
             if(active_square != null){
-                square.removeChild(square.querySelector('img'));
-                square.appendChild(active_square.querySelector('img'));
+                if(getColor(square) != getColor(active_square)){
+                    square.removeChild(square.querySelector('img'));
+                    square.appendChild(active_square.querySelector('img'));
 
-                // reset
-                active_square.style.border = css_normal_border;
-                active_square = null;
+                    // reset
+                    // active_square.style.border = css_normal_border;
+                    active_square.style.filter = "opacity(100%)"
+                    active_square = null;
+                }
             }
-            else{
+            else if(getColor(square)==turn){
+
+                turn == "_wht"? turn = "_blk" : turn = "_wht";
+
                 // reset style of previous active square if exist
                 if(active_square != null){
                     active_square.style.border = css_normal_border;
                 }
-                square.style.border = css_active_border;
-                
+                // square.style.border = css_active_border;
+                square.style.filter = "opacity(50%)"
                 // check possible moves
                 moves = checkMoves(square);
                 
@@ -201,13 +216,17 @@ squares.forEach(square => {
 
         // Move??
         if(active_square != null && square.querySelector('img')==null){
-            console.log("move");
+            // console.log("move");
             square.appendChild(active_square.querySelector('img'));
             active_square.style.border = css_normal_border;
+            active_square.style.filter = "opacity(100%)"
             active_square = null;
 
-        }
+            turn == "_wht"?  turn_indicator.style.backgroundColor = "#FFFEB8" : turn_indicator.style.backgroundColor = "black";
 
+
+        }
+        
 
     });
 });
@@ -239,4 +258,13 @@ function checkMoves(square){
     }
     
     return 0;
+}
+
+function getColor(square) {  
+    
+    return (
+        square.querySelector('img').alt.substring(
+            square.querySelector('img').alt.indexOf("_")
+        )
+    );
 }
