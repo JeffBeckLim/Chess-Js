@@ -191,6 +191,9 @@ squares.forEach(square => {
                     // active_square.style.border = css_normal_border;
                     active_square.style.filter = "opacity(100%)"
                     active_square = null;
+
+                    turn == "_wht"?  turn_indicator.style.backgroundColor = "#FFFEB8" : turn_indicator.style.backgroundColor = "black";
+
                 }
             }
             else if(getColor(square)==turn){
