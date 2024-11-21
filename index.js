@@ -4,6 +4,10 @@ const css_active_border = "2px red solid";
 const css_normal_border = "2px black solid";
 const css_moves_border = "2px blue solid";
 
+const audio_move = new Audio("assets/sound/Chess Sound Effects.wav");
+const audio_move_1 = new Audio("assets/sound/Chess Sound Effects 1.wav");
+const audio_move_eat = new Audio("assets/sound/Chess Sound Effects Eat.wav");
+
 let moves = [];
 
 const first_corner_edge = []
@@ -209,6 +213,7 @@ squares.forEach(square => {
                 if(getColor(square) != getColor(active_square)){
                     if(moves.includes(square.id)){
                     square.removeChild(square.querySelector('img'));
+                    audio_move_eat.play()
                     square.appendChild(active_square.querySelector('img'));
 
                     // reset
@@ -247,6 +252,13 @@ squares.forEach(square => {
         if(active_square != null && square.querySelector('img')==null){
             if(moves.includes(square.id)){
                 square.appendChild(active_square.querySelector('img'));
+                
+                let randomInt = getRandomInt(1, 2)
+                
+                randomInt == 1 ? audio_move.play() : audio_move_1.play();
+                // audio_move.play();
+                // audio_move_1.play();
+
                 active_square.style.border = css_normal_border;
                 active_square.style.filter = "opacity(100%)"
                 active_square = null;
@@ -618,4 +630,10 @@ function getPiece(square) {
             0,square.querySelector('img').alt.indexOf("_")
         )
     );
+}
+
+function getRandomInt(min, max) {
+    min = Math.ceil(min);
+    max = Math.floor(max);
+    return Math.floor(Math.random() * (max - min + 1)) + min;
 }
