@@ -457,7 +457,7 @@ function straightOne(square) {
             if(first_move == true){
                 for(i=0;i<2;i++){
                     id_number--
-                    moves.push(letter[letter_index]+id_number);
+                    document.getElementById(letter[letter_index]+(id_number)).querySelector('img') == null ? moves.push(letter[letter_index]+id_number) : ''
                 }
             }
             else{
@@ -496,7 +496,7 @@ function straightOne(square) {
             if(first_move == true){
                 for(i=0;i<2;i++){
                     id_number++
-                    moves.push(letter[letter_index]+id_number);
+                    document.getElementById(letter[letter_index]+(id_number)).querySelector('img') == null ? moves.push(letter[letter_index]+id_number) : ''
                 }
             }
             else{
