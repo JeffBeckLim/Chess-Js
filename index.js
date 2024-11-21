@@ -3,6 +3,34 @@ const number = ["1","2","3","4","5","6","7","8"];
 const css_active_border = "2px red solid";
 const css_normal_border = "2px black solid";
 const css_moves_border = "2px blue solid";
+
+let moves = [];
+
+const first_corner_edge = []
+const second_corner_edge = []
+const third_corner_edge = []
+const fourth_corner_edge = []
+for(i=0; i<8; i++){
+    first_corner_edge.push(letter[i]+1);
+    second_corner_edge.push(letter[i]+1);
+}
+for(i=0; i<8; i++){
+    third_corner_edge.push(letter[i]+8);
+    fourth_corner_edge.push(letter[i]+8);
+}
+for(i=0; i<8; i++){
+    first_corner_edge.push("a"+number[i]);
+    third_corner_edge.push("a"+number[i]);
+}
+for(i=0; i<8; i++){
+    second_corner_edge.push("h"+number[i]);
+    fourth_corner_edge.push("h"+number[i]);   
+}
+// console.log(first_corner_edge);
+// console.log(second_corner_edge);
+// console.log(third_corner_edge);
+// console.log(fourth_corner_edge);
+
 createBoard(letter, number);
 
 // CREATE BOARD
@@ -35,7 +63,6 @@ setHorse();
 setBishop();
 setQueen();
 setKing();
-// populate with pawns
 function setPawn(){  
     for(i=0; i<8; i++){    
         const pawn_blk = document.createElement('img');
@@ -151,7 +178,7 @@ function setKing(){
 
 const squares = document.querySelectorAll(".square");
 let active_square = null;
-let moves = null;
+
 const turn_indicator = document.getElementById("turn_indicator");
 
 // _wht white or _blk black
@@ -161,21 +188,17 @@ let turn = "_wht";
 squares.forEach(square => {
     square.addEventListener('click', () => {
         
-
+        // console.log(moves.includes(square.id))
         // reset if same square selected
         if(active_square == square){
             square.style.border = css_normal_border;
             square.style.filter = "opacity(100%)"
             active_square = null;
             
+            resetBoardSaturation();
+
             turn == "_wht"? turn = "_blk" : turn = "_wht";
 
-            // also reset the moves
-            if(moves != null){
-                // should be a loop
-                // moves.style.border = css_normal_border;
-                moves = null;
-            }
 
         }
         // set active square if has a piece
@@ -184,6 +207,7 @@ squares.forEach(square => {
             // eat ???
             if(active_square != null){
                 if(getColor(square) != getColor(active_square)){
+                    if(moves.includes(square.id)){
                     square.removeChild(square.querySelector('img'));
                     square.appendChild(active_square.querySelector('img'));
 
@@ -192,8 +216,10 @@ squares.forEach(square => {
                     active_square.style.filter = "opacity(100%)"
                     active_square = null;
 
-                    turn == "_wht"?  turn_indicator.style.backgroundColor = "#FFFEB8" : turn_indicator.style.backgroundColor = "black";
+                    resetBoardSaturation();
 
+                    turn == "_wht"?  turn_indicator.style.backgroundColor = "#FFFEB8" : turn_indicator.style.backgroundColor = "black";
+                    }
                 }
             }
             else if(getColor(square)==turn){
@@ -207,7 +233,7 @@ squares.forEach(square => {
                 // square.style.border = css_active_border;
                 square.style.filter = "opacity(50%)"
                 // check possible moves
-                moves = checkMoves(square);
+                checkMoves(square);
                 
                 // for(i=0; i<length(moves))
                 // moves.style.border = css_moves_border;
@@ -219,15 +245,16 @@ squares.forEach(square => {
 
         // Move??
         if(active_square != null && square.querySelector('img')==null){
-            // console.log("move");
-            square.appendChild(active_square.querySelector('img'));
-            active_square.style.border = css_normal_border;
-            active_square.style.filter = "opacity(100%)"
-            active_square = null;
+            if(moves.includes(square.id)){
+                square.appendChild(active_square.querySelector('img'));
+                active_square.style.border = css_normal_border;
+                active_square.style.filter = "opacity(100%)"
+                active_square = null;
+                
+                resetBoardSaturation();
 
-            turn == "_wht"?  turn_indicator.style.backgroundColor = "#FFFEB8" : turn_indicator.style.backgroundColor = "black";
-
-
+                turn == "_wht"?  turn_indicator.style.backgroundColor = "#FFFEB8" : turn_indicator.style.backgroundColor = "black";
+            }
         }
         
 
@@ -235,39 +262,360 @@ squares.forEach(square => {
 });
 
 function checkMoves(square){
-    let piece = square.querySelector('img').alt;
-    let position = Number(square.id[1]);
-    let possible_moves=[];
-
-    if(piece == 'pawn_wht'){
-        position--;
-        possible_moves = document.getElementById(square.id[0]+position);
-
-        return possible_moves;
-    }
-    if(piece == 'pawn_blk'){
-        position++;
-        possible_moves = document.getElementById(square.id[0]+position);
-
-        return possible_moves;
-    }
-    if(piece == 'rook_wht'){
-        // forward
-        for(i=position; i>1; i--){
-            possible_moves.push(document.getElementById(square.id[0]+i))
-        }
-        console.log(possible_moves)
-        return possible_moves;
-    }
     
-    return 0;
+    // console.log(getPiece(square));
+
+    let piece = getPiece(square);
+
+    if(piece === 'pawn'){
+        straightOne(square);
+
+    }
+    else if(piece == "bishop"){
+        diagonals(square);
+    }
+    else if(piece=="rook"){
+        straights(square);
+    }
+    else if(piece =="queen"){
+        diagonals(square);
+        straights(square);
+    }
+    else if(piece == 'horse'){
+        horseMove(square);
+    }
+    else{
+        diagonals(square);
+        straights(square);
+    }
+    highlightMoves(square);
 }
+
+// moves
+function diagonals(square) {
+
+    const letter_index  = letter.indexOf(square.id[0])
+    const id_number = Number(square.id[1]);
+    
+    let j = id_number;
+    let flag = 0;
+    for(i=letter_index; i>-1; i--, j--){
+        // document.getElementById(letter[i]+j).style.filter ="saturate(500%)";
+        moves.push(letter[i]+j);
+        if(getPiece(square) == 'king' && flag == 1){
+            break
+        }
+        // if in edge of board end loop
+        if(first_corner_edge.find((element) => element === letter[i]+j)){
+            break
+        }
+        // if blocked by a piece
+        else if(document.getElementById(letter[i]+j).querySelector('img') != null && flag != 0){
+            break
+        }
+        flag++;
+    }
+    j = id_number;
+    flag = 0;
+    for(i=letter_index; i<8; i++, j--){
+       
+        moves.push(letter[i]+j);
+        if(getPiece(square) == 'king' && flag == 1){
+            break
+        }
+        if(first_corner_edge.find((element) => element === letter[i]+j)){
+            break
+        }
+        else if(document.getElementById(letter[i]+j).querySelector('img') != null && flag != 0){
+            break
+        }
+        flag++;
+    }
+    j = id_number;
+    flag = 0;
+    for(i=letter_index; i>-1; i--, j++){
+       
+        moves.push(letter[i]+j);
+        if(getPiece(square) == 'king' && flag == 1){
+            break
+        }
+        if(third_corner_edge.find((element) => element === letter[i]+j)){
+            break
+        }
+        else if(document.getElementById(letter[i]+j).querySelector('img') != null && flag != 0){
+            break
+        }
+        flag++;
+    }
+    j = id_number;
+    flag = 0;
+    for(i=letter_index; i<8; i++, j++){
+    
+        moves.push(letter[i]+j);
+        if(getPiece(square) == 'king' && flag == 1){
+            break
+        }
+        if(fourth_corner_edge.find((element) => element === letter[i]+j)){
+            break
+        }
+        else if(document.getElementById(letter[i]+j).querySelector('img') != null && flag != 0){
+            break
+        }
+        flag++;
+    }
+
+}
+
+function straights(square) {  
+    const letter_index  = letter.indexOf(square.id[0])
+    const id_number = Number(square.id[1]);
+    
+    let j;
+    let flag = 0;
+    for(j=id_number; j>-1; j--){
+        moves.push(letter[letter_index]+j);
+
+        if(getPiece(square) == 'king' && flag == 1){
+            break
+        }
+
+        if(first_corner_edge.find((element) => element === letter[letter_index]+j)){
+            break
+        }
+        else if(document.getElementById(letter[letter_index]+j).querySelector('img') != null && flag != 0){
+            break
+        }
+        flag++;
+    }
+    flag = 0;
+    for(j=id_number; j<9; j++){
+        // console.log(letter[letter_index]+j);
+        moves.push(letter[letter_index]+j);
+
+        if(getPiece(square) == 'king' && flag == 1){
+            break
+        }
+        if(third_corner_edge.find((element) => element === letter[letter_index]+j)){
+            break
+        }
+        else if(document.getElementById(letter[letter_index]+j).querySelector('img') != null && flag != 0){
+            break
+        }
+        flag++;
+    }
+    flag = 0;
+    for(j=letter_index ; j<8; j++){
+        // console.log(letter[j]+id_number);
+        moves.push(letter[j]+id_number);
+
+        if(getPiece(square) == 'king' && flag == 1){
+            break
+        }
+        if(third_corner_edge.find((element) => element === letter[j]+id_number)){
+            break
+        }
+        else if(document.getElementById(letter[j]+id_number).querySelector('img') != null && flag != 0){
+            break
+        }
+        flag++;
+    }
+    flag = 0;
+    for(j=letter_index ; j>-1; j--){
+        // console.log(letter[j]+id_number);
+        moves.push(letter[j]+id_number);
+
+        if(getPiece(square) == 'king' && flag == 1){
+            break
+        }
+        if(first_corner_edge.find((element) => element === letter[j]+id_number)){
+            break
+        }
+        else if(document.getElementById(letter[j]+id_number).querySelector('img') != null && flag != 0){
+            break
+        }
+        flag++;
+    }
+}
+// for Pawn
+function straightOne(square) {  
+    let letter_index  = letter.indexOf(square.id[0])
+    let id_number = Number(square.id[1]);
+    let first_move = false;
+
+    if(getColor(square)=='_wht'){
+        let next_square=document.getElementById(letter[letter_index]+(id_number-1))
+        // check if there's a piece in front of pawn
+        if(next_square.querySelector('img') == null){
+            for(i=0; i<8;i++){
+
+                if(square.id == letter[i]+7){
+                    
+                    first_move = true;
+                    break;
+                }
+            }
+            if(first_move == true){
+                for(i=0;i<2;i++){
+                    id_number--
+                    moves.push(letter[letter_index]+id_number);
+                }
+            }
+            else{
+                id_number--
+                moves.push(letter[letter_index]+id_number);
+            }       
+        }
+        letter_index  = letter.indexOf(square.id[0])
+        id_number = Number(square.id[1])
+        if(letter_index-1 > -1 && id_number-1 > 0){
+            let eat_left = document.getElementById(letter[letter_index-1]+(id_number-1)) 
+            if(eat_left.querySelector('img') != null){
+                if(getColor(eat_left) !== getColor(square)){
+                    moves.push(letter[letter_index-1]+(id_number-1));
+                }
+            }
+        }
+        if(letter_index+1 < 8 && id_number-1 > 0){
+            let eat_right = document.getElementById(letter[letter_index+1]+(id_number-1))
+            if(eat_right.querySelector('img') != null){
+                if(getColor(eat_right) !== getColor(square)){
+                    moves.push(letter[letter_index+1]+(id_number-1));
+                }
+            }
+        }
+        
+    }else{
+        let next_square=document.getElementById(letter[letter_index]+(id_number+1))
+        if(next_square.querySelector('img') == null){
+            for(i=0; i<8;i++){
+                if(square.id == letter[i]+2){
+                    first_move = true;
+                    break;
+                }
+            }
+            if(first_move == true){
+                for(i=0;i<2;i++){
+                    id_number++
+                    moves.push(letter[letter_index]+id_number);
+                }
+            }
+            else{
+                id_number++
+                moves.push(letter[letter_index]+id_number);
+            }
+        }
+        letter_index  = letter.indexOf(square.id[0])
+        id_number = Number(square.id[1])
+        if(letter_index-1 > -1 && id_number+1 < 9){
+            let eat_left = document.getElementById(letter[letter_index-1]+(id_number+1)) 
+            if(eat_left.querySelector('img') != null){
+                if(getColor(eat_left) !== getColor(square)){
+                    moves.push(letter[letter_index-1]+(id_number+1));
+                }
+            }
+        }
+        if(letter_index+1 < 8 && id_number+1 < 9){
+            let eat_right = document.getElementById(letter[letter_index+1]+(id_number+1))
+            if(eat_right.querySelector('img') != null){
+                if(getColor(eat_right) !== getColor(square)){
+                    moves.push(letter[letter_index+1]+(id_number+1));
+                }
+            }
+        }
+    }
+    // console.log(moves);
+}
+
+function horseMove(square) {  
+
+    const letter_index  = letter.indexOf(square.id[0])
+    let id_number = Number(square.id[1]);   
+    
+    // White side perspective 
+    // first L from upper left
+    letter_index-1 >= 0 && id_number-2 > 0 ? moves.push(letter[letter_index-1]+(id_number-2)) : '';
+    // first L from upper right
+    letter_index-1 < 9 && id_number-2 > 0 ? moves.push(letter[letter_index+1]+(id_number-2)) : '';
+    
+    // ---
+
+    // lower-left 
+    letter_index-1 >= 0 && id_number+2 < 9 ? moves.push(letter[letter_index-1]+(id_number+2)) : '';
+    // lower-right
+    letter_index-1 < 9 && id_number+2 < 9 ? moves.push(letter[letter_index+1]+(id_number+2)) : '';
+    
+    // ---
+
+    // left, up
+    letter_index-2 >= 0 && id_number-1 > 0 ? moves.push(letter[letter_index-2]+(id_number-1)) : '';
+    // left, down
+    letter_index-2 >= 0 && id_number+1 < 9 ? moves.push(letter[letter_index-2]+(id_number+1)) : '';
+
+    
+    // right, up
+    letter_index+2 < 8 && id_number-1 > 0 ? moves.push(letter[letter_index+2]+(id_number-1)) : '';
+    // right, down
+    letter_index+2 < 8 && id_number+1 < 9 ? moves.push(letter[letter_index+2]+(id_number+1)) : '';
+    // letter_index-2 >= 0 && id_number+1 < 9 ? moves.push(letter[letter_index-2]+(id_number+1)) : '';
+        
+    
+    // // rigt, up
+    // console.log(letter_index+2 < 8 && [id_number-1] > 0)
+    // console.log(letter[letter_index+2]+[id_number-1])
+    // letter[letter_index+2] !== NaN && (id_number+1) !== NaN ? console.log(letter[letter_index+2] + (id_number+1)) :'';
+    // console.log(letter[letter_index+2] + (id_number+1));
+    
+}
+
+
+
+
+function resetBoardSaturation(){
+    moves = [];
+    // Get all elements with the class 'square'
+    const squares = document.querySelectorAll('.square');
+
+    // Iterate over each square and set the saturation to 100%
+    squares.forEach(square => {
+    square.style.filter = 'saturate(100%)';
+    });
+}
+
+
+function highlightMoves(square) {  
+    // console.log(moves.length);
+    let movable;
+    for(i=0;i<moves.length;i++){
+        movable = document.getElementById(moves[i]);
+        if(movable.querySelector('img') !== null){
+            if(getColor(movable) != getColor(square)){
+                movable.style.filter = "saturate(500%)";
+            }
+        }
+        else{
+            movable.style.filter = "saturate(500%)";
+        }
+    }
+}
+
+
+
 
 function getColor(square) {  
     
     return (
         square.querySelector('img').alt.substring(
             square.querySelector('img').alt.indexOf("_")
+        )
+    );
+}
+
+
+function getPiece(square) {  
+    
+    return (
+        square.querySelector('img').alt.substring(
+            0,square.querySelector('img').alt.indexOf("_")
         )
     );
 }
